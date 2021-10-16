@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -59,11 +58,15 @@ func main() {
 	csvReader := csv.NewReader(f)
 
 	limitDuration := time.Duration(*limitPtr) * time.Second
-	timer := time.AfterFunc(limitDuration, func () {
-		fmt.Printf("\nTime's up! %d of %d correct.\n", countCorrect, totalQuestionCount)
-		os.Exit(0)
-	})
-	defer timer.Stop()
+
+	// my initial approach
+	//timer := time.AfterFunc(limitDuration, func() {
+	//	fmt.Printf("\nTime's up! %d of %d correct.\n", countCorrect, totalQuestionCount)
+	//	os.Exit(0)
+	//})
+	//defer timer.Stop()
+
+	timer := time.NewTimer(limitDuration)
 
 	for {
 		record, err := csvReader.Read()
@@ -76,23 +79,31 @@ func main() {
 		// Print the question
 		fmt.Printf("%s = ", record[0])
 
-		// Parse user answer
-		reader := bufio.NewReader(os.Stdin)
-		input, err := reader.ReadString('\n')
-		if err != nil {
-			fmt.Println("An error occured while reading input")
+		// Receive the answer on a channel - now input is non-blocking
+		answerCh := make(chan string)
+		go func () {
+			var answer string
+			fmt.Scanf("%s\n", &answer)
+			answerCh <- answer
+		}()
+
+		select {
+		// We got a message from timer channel - stop
+		case <-timer.C:
+			fmt.Printf("\nTime's up! %d of %d correct.\n", countCorrect, totalQuestionCount)
 			return
+
+		// We got an answer from user input channel - process answer
+		case answer := <-answerCh:
+			if answer == record[1] {
+				countCorrect += 1
+				fmt.Print("✔\n\n")
+			} else {
+				fmt.Print("✗\n\n")
+			}
 		}
 
-		// Check answer against problem file
-		userAnswer := strings.TrimSuffix(input, "\n")
-		if userAnswer == record[1] {
-			countCorrect += 1
-			fmt.Print("✔\n\n")
-		} else {
-			fmt.Print("✗\n\n")
-		}
 	}
-	fmt.Printf("%d of %d correct.\n", countCorrect, totalQuestionCount)
 
+	fmt.Printf("\n%d of %d correct.\n", countCorrect, totalQuestionCount)
 }
