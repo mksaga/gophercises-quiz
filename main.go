@@ -10,10 +10,8 @@ func main() {
 	limitPtr := flag.Int("limit", 30, "time limit for quiz in seconds")
 
 	flag.Parse()
-	commandLineArgs := flag.Args()
+	// commandLineArgs := flag.Args()
 
-	fmt.Println("Hello World!")
-	fmt.Println("Args: ", commandLineArgs)
-	fmt.Println("csv: ", *csvPtr)
+	fmt.Println("csv file: ", *csvPtr)
 	fmt.Println("limit: ", *limitPtr)
 }
