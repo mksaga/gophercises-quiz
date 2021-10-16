@@ -2,15 +2,25 @@ package main
 
 import (
 	"bufio"
+	"encoding/csv"
 	"flag"
 	"fmt"
+	"io"
+	"log"
 	"os"
+	"strings"
 )
 
 func check(e error) {
 	if e != nil {
 		panic(e)
 	}
+}
+
+func closeFile(f *os.File) {
+	fmt.Println("closing file...")
+	err := f.Close()
+	check(err)
 }
 
 func main() {
@@ -31,14 +41,41 @@ func main() {
 	// Actually open problem csv file
 	f, err := os.Open(*csvPtr)
 	check(err)
+	defer closeFile(f)
 
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		fmt.Println(scanner.Text())
-	}
-	if err := scanner.Err(); err!= nil {
-		fmt.Fprintln(os.Stderr, "reading standard input:", err)
-	}
+	countCorrect := 0
 
+	csvReader := csv.NewReader(f)
+
+	for {
+		record, err := csvReader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Print the question
+		fmt.Printf("%s = ", record[0])
+
+		// Parse user answer
+		reader := bufio.NewReader(os.Stdin)
+		input, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Println("An error occured while reading input")
+			return
+		}
+
+		// Check answer against problem file
+		userAnswer := strings.TrimSuffix(input, "\n")
+		if userAnswer == record[1] {
+			countCorrect += 1
+			fmt.Print("✔\n\n")
+		} else {
+			fmt.Print("✗\n\n")
+		}
+	}
+	fmt.Printf("%d of X correct.\n", countCorrect)
 
 }
