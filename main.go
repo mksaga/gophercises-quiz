@@ -6,7 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"strings"
 )
@@ -48,10 +47,6 @@ func main() {
 	fmt.Println("csv file: ", *csvPtr)
 	fmt.Println("limit: ", *limitPtr)
 
-	// Access the problem csv file
-	_, err := os.ReadFile(*csvPtr)
-	check(err)
-
 	// Actually open problem csv file
 	f, err := os.Open(*csvPtr)
 	check(err)
@@ -67,9 +62,8 @@ func main() {
 		if err == io.EOF {
 			break
 		}
-		if err != nil {
-			log.Fatal(err)
-		}
+
+		check(err)
 
 		// Print the question
 		fmt.Printf("%s = ", record[0])
