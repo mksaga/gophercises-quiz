@@ -23,6 +23,20 @@ func closeFile(f *os.File) {
 	check(err)
 }
 
+func countLinesInFile(f *os.File) int {
+	scanner := bufio.NewScanner(f)
+	scanner.Split(bufio.ScanLines)
+	lineCount := 0
+	for scanner.Scan() {
+		lineCount++
+	}
+
+	// Go back to beginning of file to read questions
+	_, _ = f.Seek(0, io.SeekStart)
+
+	return lineCount
+}
+
 func main() {
 	// Declare -csv and -limit flags
 	csvPtr := flag.String("csv", "problems.csv", "a csv file in format of 'question,answer'")
@@ -44,6 +58,7 @@ func main() {
 	defer closeFile(f)
 
 	countCorrect := 0
+	totalQuestionCount := countLinesInFile(f)
 
 	csvReader := csv.NewReader(f)
 
@@ -76,6 +91,6 @@ func main() {
 			fmt.Print("✗\n\n")
 		}
 	}
-	fmt.Printf("%d of X correct.\n", countCorrect)
+	fmt.Printf("%d of %d correct.\n", countCorrect, totalQuestionCount)
 
 }
