@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 )
 
 func check(e error) {
@@ -56,6 +57,13 @@ func main() {
 	totalQuestionCount := countLinesInFile(f)
 
 	csvReader := csv.NewReader(f)
+
+	limitDuration := time.Duration(*limitPtr) * time.Second
+	timer := time.AfterFunc(limitDuration, func () {
+		fmt.Printf("\nTime's up! %d of %d correct.\n", countCorrect, totalQuestionCount)
+		os.Exit(0)
+	})
+	defer timer.Stop()
 
 	for {
 		record, err := csvReader.Read()
